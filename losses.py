@@ -3,22 +3,23 @@ import torch.nn as nn
 import numpy as np
 import torch
 import torch.nn as nn
+from torch.autograd import Variable
+
 
 class GANLoss(nn.Module):
-    def __init__(self, use_lsgan, target_real_label=1.0, target_fake_label=0.0):
+    def __init__(self, use_lsgan=True, target_real_label=1.0, target_fake_label=0.0,
+                 tensor=torch.FloatTensor):
         super(GANLoss, self).__init__()
-        self.use_lsgan = use_lsgan
-        self.target_real_label = target_real_label
-        self.target_fake_label = target_fake_label
+        self.real_label = target_real_label
+        self.fake_label = target_fake_label
         self.real_label_var = None
         self.fake_label_var = None
         self.Tensor = tensor
-        
-        if self.use_lsgan:
+        if use_lsgan:
             self.loss = nn.MSELoss()
         else:
             self.loss = nn.BCEWithLogitsLoss()
-        
+
     def get_target_tensor(self, input, target_is_real):
         target_tensor = None
         if target_is_real:
@@ -36,7 +37,7 @@ class GANLoss(nn.Module):
                 self.fake_label_var = Variable(fake_tensor, requires_grad=False)
             target_tensor = self.fake_label_var
         return target_tensor
-    
+
     def __call__(self, input, target_is_real):
         if isinstance(input[0], list):
             loss = 0
@@ -48,7 +49,6 @@ class GANLoss(nn.Module):
         else:            
             target_tensor = self.get_target_tensor(input[-1], target_is_real)
             return self.loss(input[-1], target_tensor)
-        
 # class MFMLoss(nn.Module):
 #     def __init__(self):
 #         super(MFMLoss, self).__init__()
